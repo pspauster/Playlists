@@ -3,6 +3,7 @@ library(spotifyr)
 library(httpuv)
 library(fs)
 library(lubridate)
+library(janitor)
 
 #read in playlists
 
@@ -10,18 +11,21 @@ all <- dir_ls("Months") %>%
   map_dfr(read_csv, .id = "source", col_types = cols("Release Date" = col_character())) %>% 
   mutate(date = str_sub(source, start = 8, end = -5)) %>% 
   mutate(playlist_month = my(date)) %>% 
-  separate(date, into = c("Month", "Year"), sep="_")
+  separate(date, into = c("Month", "Year"), sep="_") %>% 
+  clean_names()
 
 write_csv(all, "all.csv")
 
-
+duplicates <- get_dupes(all, track_name, artist_name_s)
+#cleaned dupes through 6/2023
 
 cleaned <- all %>% 
   janitor::clean_names() %>% 
   mutate(release_date = parse_date_time(release_date,c("ymd","dmy","Y")),
          release_year = year(release_date),
-         )
+  )
 
+cleaned %>% count(artist_name_s) %>% arrange(desc(n)) %>% print(n = 50)
 
 long_genre <- cleaned %>% 
   separate_rows(genres, sep = ",")
@@ -38,8 +42,8 @@ long_genre %>%
 twenty_twenty_two <- cleaned %>% 
   filter(year == 2022)
 
-ggplot(twenty_twenty_two, aes(x = release_year))+
-  geom_histogram() +
+ggplot(cleaned, aes(x = release_year))+
+  geom_histogram(binwidth = 1) +
   theme_minimal()
 
 twenty_twenty_two %>%
