@@ -14,7 +14,7 @@ all <- dir_ls("Months") %>%
   separate(date, into = c("Month", "Year"), sep="_") %>% 
   clean_names()
 
-write_csv(all, "all.csv")
+write_csv(all %>% arrange(desc(playlist_month)), "all.csv")
 
 duplicates <- get_dupes(all, track_name, artist_name_s)
 #cleaned dupes through 6/2023
